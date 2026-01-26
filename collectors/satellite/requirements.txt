@@ -1,6 +1,12 @@
 # HTTP client for API requests
 requests>=2.31.0
 
+# Testing dependencies
+pytest>=7.0.0
+pytest-mock>=3.0.0
+pytest-cov>=4.0.0
+responses>=0.23.0
+
 # Type checking support (optional, for development)
 # mypy>=1.0.0
 # types-requests>=2.31.0
