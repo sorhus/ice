@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  weather-collector:
+    build: ./collectors/weather
+    volumes:
+      - ./data/weather:/data
+      - ./logs:/logs
+    restart: unless-stopped
