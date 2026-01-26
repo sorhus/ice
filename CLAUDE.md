@@ -9,6 +9,7 @@
 3. **Check current branch first** - Run `git branch` before any work
 4. **All code needs tests** - No exceptions for new features or collectors
 5. **Commit before switching branches** - Don't lose work
+6. **Run all Python in Docker** - Never run Python directly on host
 
 ## Workflow
 
@@ -53,3 +54,18 @@ All collectors must support:
 - `--dry-run` - Run without side effects
 - `--limit N` - Limit results for testing
 - `--verbose` - Enable debug logging
+
+## Running Python
+
+**Never run Python directly on host.** Always use Docker:
+
+```bash
+# Run a script
+docker compose run --rm satellite-collector python src/download.py --dry-run
+
+# Run tests
+docker compose run --rm satellite-collector pytest tests/
+
+# Run with coverage
+docker compose run --rm satellite-collector pytest tests/ --cov=src
+```

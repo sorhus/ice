@@ -115,9 +115,25 @@ Add satellite image collector with Sentinel-1 and Sentinel-2 support
 
 ## Docker
 
+**All Python code must be executed inside Docker containers.** This includes:
+
+- Running scripts manually
+- Running tests
+- Debugging and development
+
+**Never run Python directly on the host machine.** Always use:
+
+```bash
+docker compose run --rm <service-name> python <script>
+docker compose run --rm <service-name> pytest tests/
+```
+
+### Docker Rules
+
 - All code runs in Docker containers
 - Test locally with `docker compose` before pushing
 - Keep images minimal (use slim base images)
+- Use `--rm` flag to clean up containers after running
 
 ## Testing
 
