@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+
+  satellite-collector:
+    build: ./collectors/satellite
+    environment:
+      - COPERNICUS_USER
+      - COPERNICUS_PASSWORD
+      - RUN_ON_STARTUP=${RUN_ON_STARTUP:-true}
+    volumes:
+      - ./data/sar:/data/sar
+      - ./data/optical:/data/optical
+      - ./state:/state
+      - ./logs:/logs
+    restart: unless-stopped
+
   weather-collector:
     build: ./collectors/weather
     volumes:

@@ -1,1 +1,23 @@
 is-sar
+
+# Data and logs (volumes)
+data/
+logs/
+state/
+
+# Environment files
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+*.egg-info/
+
+# Agent logs
+agent-progress.log
