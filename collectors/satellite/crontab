@@ -1,0 +1,6 @@
+# Satellite image collection - daily at 06:00 UTC
+# Downloads Sentinel-1 SAR and Sentinel-2 optical imagery from Copernicus Data Space
+
+0 6 * * * root cd /app && /usr/local/bin/python src/download.py >> /logs/cron.log 2>&1
+
+# Empty line required at end of crontab
