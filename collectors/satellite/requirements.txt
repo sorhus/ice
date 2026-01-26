@@ -1,0 +1,6 @@
+# HTTP client for API requests
+requests>=2.31.0
+
+# Type checking support (optional, for development)
+# mypy>=1.0.0
+# types-requests>=2.31.0
