@@ -6,7 +6,7 @@
 
 1. **ALWAYS fetch/pull before any work** - Sync with remote first
 2. **NEVER commit to main branch** - Always use feature branches
-3. **NEVER amend pushed commits** - Make a new commit instead
+3. **NEVER amend on main** - Assume main commits are already pushed
 4. **Check current branch first** - Run `git branch` before any work
 5. **All code needs tests** - No exceptions for new features or collectors
 6. **Commit before switching branches** - Don't lose work
