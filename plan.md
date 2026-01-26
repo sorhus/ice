@@ -207,19 +207,156 @@ Maintain a database of Swedish lakes with:
 - Typical freezing patterns
 - Historical observations
 
-### Data Correlation
-For each lake, assemble:
-1. Latest SAR backscatter values (extract from imagery)
-2. Temperature history (cold degree days)
-3. Current forecast (will it stay frozen?)
-4. Recent observations (ground truth)
+### Time Series Data Model
 
-### Ice Status Model
-Combine inputs to estimate:
-- **Ice presence:** Yes/No/Uncertain
-- **Ice quality:** Smooth/Rough/Snow-covered
-- **Trend:** Improving/Stable/Deteriorating
-- **Confidence:** Based on data freshness and agreement
+All data must be stored in a clear time series format to enable learning and backtesting.
+
+```
+/data/
+├── timeseries/
+│   └── {lake_id}/
+│       ├── sar/
+│       │   └── {timestamp}.json        # SAR backscatter values
+│       ├── optical/
+│       │   └── {timestamp}.json        # Optical indices/features
+│       ├── weather/
+│       │   └── {timestamp}.json        # Temperature, wind, precip
+│       ├── forecast/
+│       │   └── {timestamp}.json        # Forecast at time of prediction
+│       ├── observations/
+│       │   └── {timestamp}.json        # Ground truth reports
+│       └── predictions/
+│           └── {timestamp}.json        # AI predictions + prompt used
+```
+
+Each record includes:
+- `timestamp`: ISO 8601 datetime
+- `lake_id`: Reference to lake
+- `data`: Source-specific values
+- `metadata`: Source, quality flags, etc.
+
+---
+
+## AI Prediction System
+
+### Overview
+Use an LLM to analyze satellite imagery, weather data, and forecasts to predict future ice conditions. The system learns over time by comparing predictions to actual observations.
+
+### Prediction Loop
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Daily Prediction                          │
+│                                                                  │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌─────────────┐  │
+│  │ SAR      │ + │ Optical  │ + │ Weather  │ + │ Forecast    │  │
+│  │ imagery  │   │ imagery  │   │ history  │   │ (next 7d)   │  │
+│  └────┬─────┘   └────┬─────┘   └────┬─────┘   └──────┬──────┘  │
+│       └──────────────┴──────────────┴────────────────┘          │
+│                              │                                   │
+│                              ▼                                   │
+│                     ┌────────────────┐                          │
+│                     │  Build Prompt  │◀── System Prompt         │
+│                     │  + Context     │    (evolving)            │
+│                     └───────┬────────┘                          │
+│                             │                                    │
+│                             ▼                                    │
+│                     ┌────────────────┐                          │
+│                     │   LLM (Claude) │                          │
+│                     └───────┬────────┘                          │
+│                             │                                    │
+│                             ▼                                    │
+│                     ┌────────────────┐                          │
+│                     │  Prediction    │──▶ Store with timestamp  │
+│                     │  (per lake)    │    + prompt version      │
+│                     └────────────────┘                          │
+└─────────────────────────────────────────────────────────────────┘
+
+                              │
+                              │ Wait for observations
+                              ▼
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      Feedback Loop                               │
+│                                                                  │
+│  ┌────────────────┐        ┌────────────────┐                   │
+│  │  Prediction    │   vs   │  Actual        │                   │
+│  │  (from N days  │        │  Observation   │                   │
+│  │   ago)         │        │  (today)       │                   │
+│  └───────┬────────┘        └───────┬────────┘                   │
+│          └─────────────┬───────────┘                            │
+│                        │                                         │
+│                        ▼                                         │
+│               ┌────────────────┐                                │
+│               │  Evaluate      │                                │
+│               │  Accuracy      │                                │
+│               └───────┬────────┘                                │
+│                       │                                          │
+│                       ▼                                          │
+│               ┌────────────────┐                                │
+│               │  Update        │──▶ Store learnings             │
+│               │  System Prompt │    + accuracy metrics          │
+│               └────────────────┘                                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Prediction Storage
+
+Each prediction record:
+```json
+{
+  "timestamp": "2024-01-15T06:00:00Z",
+  "lake_id": "vanern",
+  "prediction": {
+    "ice_present": true,
+    "ice_quality": "smooth",
+    "confidence": 0.8,
+    "trend": "stable",
+    "valid_until": "2024-01-18T00:00:00Z"
+  },
+  "inputs": {
+    "sar_timestamp": "2024-01-14T05:30:00Z",
+    "optical_timestamp": null,
+    "weather_range": ["2024-01-08", "2024-01-14"],
+    "forecast_timestamp": "2024-01-14T12:00:00Z"
+  },
+  "prompt_version": "v3",
+  "prompt_hash": "abc123..."
+}
+```
+
+### Prompt Evolution
+
+Store prompt versions with:
+```
+/data/prompts/
+├── v1.md                    # Initial prompt
+├── v2.md                    # After first learnings
+├── v3.md                    # Current version
+└── evolution_log.json       # Why each change was made
+```
+
+Evolution log tracks:
+- What predictions failed
+- What patterns were missed
+- What adjustments improved accuracy
+- Accuracy metrics per prompt version
+
+### Evaluation Metrics
+
+When observations arrive, score predictions:
+- **Ice presence accuracy**: Did we correctly predict ice/no ice?
+- **Quality accuracy**: Did we predict the right quality?
+- **Trend accuracy**: Did conditions change as predicted?
+- **Lead time**: How far ahead were accurate predictions?
+
+### Learning Process
+
+1. **Collect failures**: When prediction ≠ observation
+2. **Analyze patterns**: What input signals were missed?
+3. **Hypothesize**: What prompt changes might help?
+4. **Update prompt**: Add new rules/examples
+5. **Track results**: Did accuracy improve?
 
 ---
 
@@ -260,20 +397,40 @@ nordic-ice/
 │       └── src/
 │           └── scrape.py
 │
-├── analysis/                    # Data analysis/prediction
+├── analysis/                    # Data assembly
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── src/
 │       ├── lakes.py             # Lake database
 │       ├── correlate.py         # Data assembly
-│       └── predict.py           # Ice status model
+│       └── timeseries.py        # Build per-lake time series
+│
+├── predictor/                   # AI prediction system
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── src/
+│       ├── predict.py           # Run predictions via LLM
+│       ├── evaluate.py          # Compare predictions to observations
+│       ├── prompt_manager.py    # Version and evolve prompts
+│       └── metrics.py           # Track accuracy over time
 │
 ├── data/                        # All collected data (volume)
-│   ├── sar/                     # Sentinel-1 radar
-│   ├── optical/                 # Sentinel-2 optical
-│   ├── weather/
-│   ├── forecast/
-│   └── observations/
+│   ├── sar/                     # Sentinel-1 radar (raw)
+│   ├── optical/                 # Sentinel-2 optical (raw)
+│   ├── weather/                 # SMHI observations (raw)
+│   ├── forecast/                # SMHI forecasts (raw)
+│   ├── observations/            # Skating reports (raw)
+│   ├── timeseries/              # Processed per-lake time series
+│   │   └── {lake_id}/
+│   │       ├── sar/
+│   │       ├── optical/
+│   │       ├── weather/
+│   │       ├── forecast/
+│   │       ├── observations/
+│   │       └── predictions/
+│   └── prompts/                 # Prompt versions + evolution log
+│       ├── v1.md
+│       └── evolution_log.json
 │
 ├── state/                       # Collector state (volume)
 │
@@ -309,14 +466,18 @@ nordic-ice/
 
 ### Phase 5: Data Assembly
 1. Lake database with polygons
-2. Extract SAR values per lake
+2. Extract SAR/optical values per lake
 3. Correlate with weather/forecasts
-4. Link observations
+4. Link observations to lakes
+5. Build per-lake time series
 
-### Phase 6: Analysis/Prediction
-1. Simple rule-based model initially
-2. Combine indicators into status
-3. Output per-lake assessment
+### Phase 6: AI Prediction System
+1. Initial prediction prompt
+2. Run daily predictions via LLM
+3. Store predictions with metadata
+4. Evaluation against observations
+5. Accuracy tracking
+6. Prompt evolution workflow
 
 ---
 
@@ -429,17 +590,19 @@ Correlate and combine data from all sources per lake for analysis.
 
 ---
 
-### Epic: Analysis & Prediction
+### Epic: AI Prediction System
 
-Analyze assembled data to predict ice conditions and quality.
+LLM-based prediction with iterative prompt improvement.
 
 *To be broken down after Data Assembly epic is complete.*
 
-- Ice presence detection model
-- Ice quality classification
-- Trend analysis (improving/deteriorating)
-- Confidence scoring
-- Output format (API, reports, maps)
+- Build prediction prompt with satellite + weather context
+- Run daily predictions per lake
+- Store predictions with prompt version and inputs
+- Evaluate predictions against incoming observations
+- Track accuracy metrics per prompt version
+- Prompt evolution workflow (analyze failures → update prompt)
+- Learning feedback loop automation
 
 ---
 
