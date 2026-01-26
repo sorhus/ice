@@ -5,11 +5,26 @@ This script:
 1. Fetches observations from configured weather stations
 2. Calculates cold degree days for temperature data
 3. Stores data organized by date
+
+Usage:
+    # Normal run (via cron or manual)
+    python src/fetch.py
+
+    # Dry-run mode (fetch but don't save)
+    python src/fetch.py --dry-run
+
+    # Limit to specific number of stations
+    python src/fetch.py --limit 2
+
+    # Verbose logging
+    python src/fetch.py --verbose
 """
 
+import argparse
 import json
 import logging
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,16 +32,65 @@ from config import DATA_DIR, FREEZING_POINT, LOG_DIR, LOG_FILE, STATIONS
 from smhi_client import SMHIClient, SMHIClientError
 
 
-def setup_logging() -> logging.Logger:
+@dataclass
+class RunOptions:
+    """Runtime options from CLI arguments."""
+
+    dry_run: bool = False
+    limit: int | None = None
+    verbose: bool = False
+
+
+def parse_args() -> RunOptions:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Fetch weather observations from SMHI Open Data API",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python src/fetch.py                  # Normal run
+  python src/fetch.py --dry-run        # Fetch only, don't save files
+  python src/fetch.py --limit 2        # Fetch max 2 stations
+  python src/fetch.py --verbose        # Enable debug logging
+        """,
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Fetch data but don't save to files",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        metavar="N",
+        help="Maximum number of stations to fetch",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable verbose (debug) logging",
+    )
+
+    args = parser.parse_args()
+    return RunOptions(
+        dry_run=args.dry_run,
+        limit=args.limit,
+        verbose=args.verbose,
+    )
+
+
+def setup_logging(verbose: bool = False) -> logging.Logger:
     """Configure logging to both file and console."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    level = logging.DEBUG if verbose else logging.INFO
+    logger.setLevel(level)
 
     # File handler
     file_handler = logging.FileHandler(LOG_FILE)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(level)
     file_format = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
@@ -34,7 +98,7 @@ def setup_logging() -> logging.Logger:
 
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(level)
     console_format = logging.Formatter("%(levelname)s - %(message)s")
     console_handler.setFormatter(console_format)
 
@@ -94,6 +158,7 @@ def save_station_data(
     observations: dict[str, list[dict]],
     cold_degree_days: dict[str, float],
     logger: logging.Logger,
+    dry_run: bool = False,
 ) -> None:
     """Save station observations to JSON files organized by date.
 
@@ -103,13 +168,10 @@ def save_station_data(
         observations: Dictionary of parameter observations.
         cold_degree_days: Calculated CDD values per date.
         logger: Logger instance.
+        dry_run: If True, don't save files.
     """
     # Get the current date for organizing data
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-    # Create date directory
-    date_dir = DATA_DIR / today
-    date_dir.mkdir(parents=True, exist_ok=True)
 
     # Prepare station data
     station_data = {
@@ -121,19 +183,38 @@ def save_station_data(
         "cold_degree_days": cold_degree_days,
     }
 
-    # Save to JSON file
+    # Generate output path
+    date_dir = DATA_DIR / today
     output_file = date_dir / f"station_{station_id}.json"
+
+    if dry_run:
+        # Count observations for summary
+        obs_count = sum(len(obs) for obs in observations.values())
+        logger.info(
+            "[DRY-RUN] Would save station %d (%s) to %s (%d observations)",
+            station_id,
+            station_info["name"],
+            output_file,
+            obs_count,
+        )
+        return
+
+    # Create date directory
+    date_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save to JSON file
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(station_data, f, indent=2, ensure_ascii=False)
 
     logger.info(f"Saved data for station {station_id} to {output_file}")
 
 
-def fetch_all_stations(logger: logging.Logger) -> dict[str, int]:
+def fetch_all_stations(logger: logging.Logger, options: RunOptions) -> dict[str, int]:
     """Fetch observations from all configured stations.
 
     Args:
         logger: Logger instance.
+        options: Runtime options (dry-run, limit, etc.).
 
     Returns:
         Dictionary with success/failure counts.
@@ -141,7 +222,14 @@ def fetch_all_stations(logger: logging.Logger) -> dict[str, int]:
     client = SMHIClient()
     stats = {"success": 0, "failed": 0}
 
-    for station_id, station_info in STATIONS.items():
+    stations_to_process = list(STATIONS.items())
+
+    # Apply limit if specified
+    if options.limit is not None:
+        stations_to_process = stations_to_process[: options.limit]
+        logger.info(f"Limiting to {options.limit} stations")
+
+    for station_id, station_info in stations_to_process:
         logger.info(f"Fetching data for station {station_id} ({station_info['name']})")
 
         try:
@@ -159,6 +247,7 @@ def fetch_all_stations(logger: logging.Logger) -> dict[str, int]:
                 observations,
                 cold_degree_days,
                 logger,
+                dry_run=options.dry_run,
             )
 
             stats["success"] += 1
@@ -233,28 +322,44 @@ def create_daily_summary(logger: logging.Logger) -> None:
     logger.info(f"Created daily summary at {summary_file}")
 
 
-def main() -> int:
+def main(options: RunOptions | None = None) -> int:
     """Main entry point for weather data collection.
+
+    Args:
+        options: Runtime options. If None, parsed from command line.
 
     Returns:
         Exit code (0 for success, 1 for failure).
     """
-    logger = setup_logging()
-    logger.info("Starting weather data collection")
+    # Parse CLI arguments if not provided
+    if options is None:
+        options = parse_args()
 
-    # Ensure data directory exists
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    logger = setup_logging(verbose=options.verbose)
+    logger.info("Starting weather data collection")
+    if options.dry_run:
+        logger.info("DRY-RUN MODE: No files will be saved")
+    if options.limit:
+        logger.info(f"Limiting to {options.limit} stations")
+
+    # Ensure data directory exists (skip in dry-run mode)
+    if not options.dry_run:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     # Fetch data from all stations
-    stats = fetch_all_stations(logger)
+    stats = fetch_all_stations(logger, options)
 
-    # Create daily summary
-    create_daily_summary(logger)
+    # Create daily summary (skip in dry-run mode)
+    if not options.dry_run:
+        create_daily_summary(logger)
+    else:
+        logger.info("[DRY-RUN] Would create daily summary")
 
     # Log results
+    action = "would fetch" if options.dry_run else "fetched"
     logger.info(
-        f"Collection complete: {stats['success']} succeeded, "
-        f"{stats['failed']} failed"
+        f"Collection complete{' (DRY-RUN)' if options.dry_run else ''}: "
+        f"{stats['success']} {action}, {stats['failed']} failed"
     )
 
     # Return error code if any stations failed
