@@ -6,10 +6,11 @@
 
 1. **ALWAYS fetch/pull before any work** - Sync with remote first
 2. **NEVER commit to main branch** - Always use feature branches
-3. **Check current branch first** - Run `git branch` before any work
-4. **All code needs tests** - No exceptions for new features or collectors
-5. **Commit before switching branches** - Don't lose work
-6. **Run all Python in Docker** - Never run Python directly on host
+3. **NEVER amend pushed commits** - Make a new commit instead
+4. **Check current branch first** - Run `git branch` before any work
+5. **All code needs tests** - No exceptions for new features or collectors
+6. **Commit before switching branches** - Don't lose work
+7. **Run all Python in Docker** - Never run Python directly on host
 
 ## Workflow
 

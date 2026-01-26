@@ -86,6 +86,14 @@ fixes
 Updated stuff
 ```
 
+### Never Amend Pushed Commits
+
+**NEVER use `git commit --amend` on commits that have been pushed.** This rewrites history and causes push rejections for others.
+
+- `--amend` is only safe on **local unpushed commits**
+- If you need to fix a pushed commit, make a **new commit**
+- Never force push to shared branches
+
 ## Pull Requests
 
 - **Features/stories**: Always create a PR
