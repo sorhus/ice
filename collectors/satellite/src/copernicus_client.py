@@ -170,7 +170,10 @@ class CopernicusClient:
         """Build OData time filter for recent products."""
         now = datetime.now(timezone.utc)
         start = now - timedelta(hours=self.search_config.lookback_hours)
-        return f"ContentDate/Start ge {start.isoformat()}Z and ContentDate/Start le {now.isoformat()}Z"
+        # Format as ISO 8601 with Z suffix (replace +00:00 with Z for OData compatibility)
+        start_str = start.strftime("%Y-%m-%dT%H:%M:%SZ")
+        now_str = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        return f"ContentDate/Start ge {start_str} and ContentDate/Start le {now_str}"
 
     def search_sentinel1(self) -> list[Product]:
         """Search for Sentinel-1 GRD products over Sweden."""

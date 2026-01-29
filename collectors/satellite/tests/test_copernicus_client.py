@@ -248,6 +248,7 @@ class TestCopernicusClient:
         """Client should retry on download failure."""
         import tempfile
         import os
+        import requests as req
 
         client._token = Token(
             access_token="test_token",
@@ -267,7 +268,7 @@ class TestCopernicusClient:
         responses.add(
             responses.GET,
             f"{client.config.download_url}/Products({product.id})/$value",
-            body=Exception("Network error"),
+            body=req.exceptions.ConnectionError("Network error"),
         )
         responses.add(
             responses.GET,

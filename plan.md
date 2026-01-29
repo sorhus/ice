@@ -8,6 +8,17 @@ A multi-component system that collects and analyzes data to predict where ice co
 
 Predict/analyze ice conditions on lakes and waterways to help skaters find safe, skateable ice.
 
+## Progress
+
+| Phase | Component | Status |
+|-------|-----------|--------|
+| 1 | Satellite Collector | ✓ Complete |
+| 2 | Weather Collector | ✓ Complete |
+| 3 | Forecast Collector | Not started |
+| 4 | Observation Collector | Not started |
+| 5 | Data Assembly | Not started |
+| 6 | AI Prediction System | Not started |
+
 ## System Architecture
 
 ```
@@ -489,7 +500,7 @@ Automated collection of all data sources required for ice condition analysis.
 
 ---
 
-#### Story 1: Satellite Image Collector
+#### Story 1: Satellite Image Collector ✓
 
 **As a** system operator
 **I want** automated daily download of Sentinel-1 SAR and Sentinel-2 optical images over Sweden
@@ -497,21 +508,21 @@ Automated collection of all data sources required for ice condition analysis.
 
 **Tasks:**
 
-- [ ] Set up Copernicus Data Space account and obtain API credentials
-- [ ] Implement OAuth2 authentication with token refresh
-- [ ] Implement OData API search for Sentinel-1 GRD products
-- [ ] Implement OData API search for Sentinel-2 L2A products (with cloud filter)
-- [ ] Implement product download with progress and retry logic
-- [ ] Add state management (track downloaded product IDs for both)
-- [ ] Create Dockerfile with Python and cron
-- [ ] Create crontab for daily execution (06:00 UTC)
-- [ ] Add logging to file
-- [ ] Write docker-compose service definition
-- [ ] Test end-to-end: build, run, verify downloads (SAR + optical)
+- [x] Set up Copernicus Data Space account and obtain API credentials
+- [x] Implement OAuth2 authentication with token refresh
+- [x] Implement OData API search for Sentinel-1 GRD products
+- [x] Implement OData API search for Sentinel-2 L2A products (with cloud filter)
+- [x] Implement product download with progress and retry logic
+- [x] Add state management (track downloaded product IDs for both)
+- [x] Create Dockerfile with Python and cron
+- [x] Create crontab for daily execution (06:00 UTC)
+- [x] Add logging to file
+- [x] Write docker-compose service definition
+- [x] Test end-to-end: build, run, verify downloads (SAR + optical)
 
 ---
 
-#### Story 2: Weather Data Collector
+#### Story 2: Weather Data Collector ✓
 
 **As a** system operator
 **I want** automated collection of weather observations from SMHI
@@ -519,16 +530,16 @@ Automated collection of all data sources required for ice condition analysis.
 
 **Tasks:**
 
-- [ ] Research SMHI Open Data API structure and endpoints
-- [ ] Identify weather stations relevant to major lakes
-- [ ] Implement API client for fetching observations
-- [ ] Fetch parameters: temperature, wind, precipitation, cloud cover
-- [ ] Calculate and store cold degree days per station
-- [ ] Create Dockerfile with Python and cron
-- [ ] Create crontab for hourly execution
-- [ ] Add logging to file
-- [ ] Write docker-compose service definition
-- [ ] Test end-to-end: build, run, verify data
+- [x] Research SMHI Open Data API structure and endpoints
+- [x] Identify weather stations relevant to major lakes
+- [x] Implement API client for fetching observations
+- [x] Fetch parameters: temperature, wind, precipitation, cloud cover
+- [x] Calculate and store cold degree days per station
+- [x] Create Dockerfile with Python and cron
+- [x] Create crontab for hourly execution
+- [x] Add logging to file
+- [x] Write docker-compose service definition
+- [x] Test end-to-end: build, run, verify data
 
 ---
 

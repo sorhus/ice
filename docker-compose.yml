@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
 
   satellite-collector:
@@ -19,5 +17,12 @@ services:
     build: ./collectors/weather
     volumes:
       - ./data/weather:/data
+      - ./logs:/logs
+    restart: unless-stopped
+
+  forecast-collector:
+    build: ./collectors/forecast
+    volumes:
+      - ./data/forecast:/data
       - ./logs:/logs
     restart: unless-stopped
