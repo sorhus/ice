@@ -74,6 +74,13 @@ class SMHIClient:
             response = self.session.get(url, timeout=self.timeout)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            # 404 is expected when a station doesn't have a particular parameter
+            if e.response is not None and e.response.status_code == 404:
+                logger.debug(f"No data available: {url}")
+            else:
+                logger.error(f"API request failed: {url} - {e}")
+            raise SMHIClientError(f"Failed to fetch data from SMHI: {e}") from e
         except requests.exceptions.RequestException as e:
             logger.error(f"API request failed: {url} - {e}")
             raise SMHIClientError(f"Failed to fetch data from SMHI: {e}") from e

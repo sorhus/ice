@@ -18,36 +18,29 @@ PARAMETERS = {
     16: "cloud_cover",      # Total cloud cover (instantaneous, 1 hour)
 }
 
-# Weather stations near major Swedish lakes
-# Selected stations cover the main skating regions
+# Weather stations in Stockholm/Mälaren region
+# Only active stations from SMHI API (verified 2026-01)
 # Format: station_id: {"name": str, "lakes": list of nearby lakes}
 STATIONS = {
-    # Stockholm area / Malaren
-    97100: {"name": "Stockholm-Arlanda", "lakes": ["malaren"]},
-    98210: {"name": "Stockholm", "lakes": ["malaren"]},
+    # Mälaren - west
+    97280: {"name": "Adelsö A", "lakes": ["malaren"]},  # Island in Mälaren
+    97370: {"name": "Enköping", "lakes": ["malaren"]},
 
-    # Vanern area
-    72420: {"name": "Karlstad Flygplats", "lakes": ["vanern"]},
-    72530: {"name": "Lidkoping", "lakes": ["vanern"]},
+    # Mälaren - central/Stockholm
+    97200: {"name": "Stockholm-Bromma Flygplats", "lakes": ["malaren"]},
+    98230: {"name": "Stockholm-Observatoriekullen A", "lakes": ["malaren"]},
+    97100: {"name": "Tullinge A", "lakes": ["malaren"]},
 
-    # Vattern area
-    85090: {"name": "Jonkoping", "lakes": ["vattern"]},
-    84540: {"name": "Motala", "lakes": ["vattern"]},
+    # Mälaren - south
+    97120: {"name": "Södertälje", "lakes": ["malaren"]},
 
-    # Hjalmaren area
-    96190: {"name": "Orebro Flygplats", "lakes": ["hjalmaren"]},
+    # Mälaren - north/Uppsala
+    97400: {"name": "Stockholm-Arlanda Flygplats", "lakes": ["malaren", "ekoln"]},
+    97510: {"name": "Uppsala Aut", "lakes": ["malaren", "ekoln"]},
+    97530: {"name": "Uppsala Flygplats", "lakes": ["ekoln"]},
 
-    # Siljan area (Dalarna)
-    105260: {"name": "Mora", "lakes": ["siljan"]},
-
-    # Storsjon area (Jamtland)
-    123480: {"name": "Ostersund-Froson", "lakes": ["storsjon"]},
-
-    # Norrbotten lakes
-    162860: {"name": "Lulea-Kallax", "lakes": ["lulealven"]},
-
-    # Uppsala area
-    97510: {"name": "Uppsala Flygplats", "lakes": ["malaren", "ekoln"]},
+    # Outer Stockholm (reference)
+    98040: {"name": "Berga", "lakes": ["malaren"]},
 }
 
 # Reference temperature for cold degree day calculation (Celsius)

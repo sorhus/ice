@@ -224,12 +224,14 @@ class TestSMHIClientError:
     @responses.activate
     def test_get_raises_on_network_error(self):
         """_get should raise SMHIClientError on network failure."""
+        import requests as req
+
         client = SMHIClient()
 
         responses.add(
             responses.GET,
             f"{client.base_url}/test",
-            body=Exception("Network error"),
+            body=req.exceptions.ConnectionError("Network error"),
         )
 
         with pytest.raises(SMHIClientError):
