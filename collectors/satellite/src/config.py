@@ -31,9 +31,10 @@ class CopernicusConfig:
 class SearchConfig:
     """Search parameters for satellite products."""
 
-    # Sweden bounding box (approximate)
+    # Stockholm/Mälaren region bounding box
     # Format: west, south, east, north
-    sweden_bbox: tuple[float, float, float, float] = (10.5, 55.3, 24.2, 69.1)
+    # Covers: Enköping (west) to archipelago (east), Södertälje (south) to Uppsala (north)
+    sweden_bbox: tuple[float, float, float, float] = (17.0, 59.0, 19.0, 60.0)
 
     # Search time window in hours
     lookback_hours: int = 48

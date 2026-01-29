@@ -103,10 +103,10 @@ Updated stuff
 ### PR Process
 
 1. Push your feature branch
-2. Create PR against `main`
+2. Create PR against `main` on GitHub
 3. Add description of changes
 4. Request review if applicable
-5. Merge when approved
+5. **Merge via GitHub.com** (never merge locally)
 
 ### PR Title Format
 

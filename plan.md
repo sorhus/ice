@@ -14,7 +14,7 @@ Predict/analyze ice conditions on lakes and waterways to help skaters find safe,
 |-------|-----------|--------|
 | 1 | Satellite Collector | ✓ Complete |
 | 2 | Weather Collector | ✓ Complete |
-| 3 | Forecast Collector | Not started |
+| 3 | Forecast Collector | ✓ Complete |
 | 4 | Observation Collector | Not started |
 | 5 | Data Assembly | Not started |
 | 6 | AI Prediction System | Not started |
@@ -543,7 +543,7 @@ Automated collection of all data sources required for ice condition analysis.
 
 ---
 
-#### Story 3: Weather Forecast Collector
+#### Story 3: Weather Forecast Collector ✓
 
 **As a** system operator
 **I want** automated collection of weather forecasts from SMHI
@@ -551,16 +551,16 @@ Automated collection of all data sources required for ice condition analysis.
 
 **Tasks:**
 
-- [ ] Research SMHI PMP (Point Meteorological Prognosis) API
-- [ ] Define grid points or locations to fetch forecasts for
-- [ ] Implement API client for fetching forecasts
-- [ ] Fetch parameters: temperature, wind, precipitation (10-day horizon)
-- [ ] Store forecasts with timestamp for historical comparison
-- [ ] Create Dockerfile with Python and cron
-- [ ] Create crontab for 2x daily execution (06:00, 18:00 UTC)
-- [ ] Add logging to file
-- [ ] Write docker-compose service definition
-- [ ] Test end-to-end: build, run, verify data
+- [x] Research SMHI PMP (Point Meteorological Prognosis) API
+- [x] Define grid points or locations to fetch forecasts for
+- [x] Implement API client for fetching forecasts
+- [x] Fetch parameters: temperature, wind, precipitation (10-day horizon)
+- [x] Store forecasts with timestamp for historical comparison
+- [x] Create Dockerfile with Python and cron
+- [x] Create crontab for 2x daily execution (06:00, 18:00 UTC)
+- [x] Add logging to file
+- [x] Write docker-compose service definition
+- [x] Test end-to-end: build, run, verify data
 
 ---
 
